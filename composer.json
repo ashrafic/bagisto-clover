@@ -21,7 +21,9 @@
         "issues": "https://github.com/ashrafic/bagisto-clover/issues",
         "source": "https://github.com/ashrafic/bagisto-clover"
     },
-    "require": {},
+    "require": {
+        "php": "^8.3"
+    },
     "require-dev": {},
     "autoload": {
         "psr-4": {
