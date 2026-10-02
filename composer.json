@@ -1,0 +1,44 @@
+{
+    "name": "ashrafic/bagisto-clover",
+    "description": "Clover Hosted Checkout payment gateway integration for Bagisto 2.x — redirect checkout, signed webhooks, auto invoicing and order transactions.",
+    "license": "MIT",
+    "type": "bagisto-package",
+    "keywords": [
+        "bagisto",
+        "clover",
+        "payment",
+        "laravel",
+        "hosted-checkout",
+        "ecommerce"
+    ],
+    "authors": [
+        {
+            "name": "ashrafic",
+            "homepage": "https://github.com/ashrafic"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/ashrafic/bagisto-clover/issues",
+        "source": "https://github.com/ashrafic/bagisto-clover"
+    },
+    "require": {},
+    "require-dev": {},
+    "autoload": {
+        "psr-4": {
+            "Webkul\\Clover\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Webkul\\Clover\\Providers\\CloverServiceProvider"
+            ],
+            "aliases": {}
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
