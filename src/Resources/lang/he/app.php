@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'אסימון API',
+        'api-test-token' => 'אסימון API לבדיקה',
         'clover' => 'Clover',
         'clover-info' => 'קבלו תשלומים דרך עמוד Clover Hosted Checkout. צרו טוקן API למסחר אלקטרוני מסוג Hosted Checkout בלוח הבקרה של הסוחר ב-Clover ורשמו את כתובת ה-URL של הוובהוק של החנות (https://your-store.com/clover/webhook) בעמוד ההגדרות של Hosted Checkout יחד עם מפתח החתימה.',
         'merchant-id' => 'מזהה סוחר',

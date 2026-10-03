@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'API Tokenu',
+        'api-test-token' => 'Test API Tokenu',
         'clover' => 'Clover',
         'clover-info' => 'Clover Hosted Checkout sayfası aracılığıyla ödeme kabul edin. Clover Merchant Dashboard üzerinden Hosted Checkout türünde bir E-ticaret API anahtarı oluşturun ve mağazanın webhook URL\\\'sini (https://your-store.com/clover/webhook) imza anahtarıyla birlikte Hosted Checkout ayarlar sayfasına kaydedin.',
         'merchant-id' => 'Satıcı Kimliği',

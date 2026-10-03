@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'API টোকেন',
+        'api-test-token' => 'টেস্ট API টোকেন',
         'clover' => 'Clover',
         'clover-info' => 'Clover হোস্টেড চেকআউট পেজের মাধ্যমে পেমেন্ট গ্রহণ করুন। Clover মার্চেন্ট ড্যাশবোর্ড থেকে Hosted Checkout ইন্টিগ্রেশন টাইপের জন্য একটি ই-কমার্স API টোকেন তৈরি করুন এবং স্টোরের ওয়েবহুক URL (https://your-store.com/clover/webhook) সাইনিং সিক্রেটসহ হোস্টেড চেকআউট সেটিংস পেজে নিবন্ধন করুন।',
         'merchant-id' => 'মার্চেন্ট আইডি',

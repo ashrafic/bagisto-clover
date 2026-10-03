@@ -48,7 +48,7 @@ return [
                 'locale_based' => false,
             ], [
                 'name' => 'api_key',
-                'title' => 'admin::app.configuration.index.sales.payment-methods.api-key',
+                'title' => 'clover::app.configuration.api-token',
                 'info' => 'admin::app.configuration.index.sales.payment-methods.applicable-production',
                 'type' => 'password',
                 'depends' => 'active:1',
@@ -79,7 +79,7 @@ return [
                 'locale_based' => false,
             ], [
                 'name' => 'api_test_key',
-                'title' => 'admin::app.configuration.index.sales.payment-methods.api-test-key',
+                'title' => 'clover::app.configuration.api-test-token',
                 'info' => 'admin::app.configuration.index.sales.payment-methods.applicable-sandbox',
                 'type' => 'password',
                 'depends' => 'active:1',

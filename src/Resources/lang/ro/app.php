@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'Token API',
+        'api-test-token' => 'Token API de test',
         'clover' => 'Clover',
         'clover-info' => 'Acceptați plăți prin pagina Clover Hosted Checkout. Generați un token API de comerț electronic de tip Hosted Checkout din tabloul de bord al comerciantului Clover și înregistrați URL-ul webhook al magazinului (https://your-store.com/clover/webhook) pe pagina de setări Hosted Checkout împreună cu cheia de semnătură.',
         'merchant-id' => 'Merchant ID',

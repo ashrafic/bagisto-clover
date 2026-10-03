@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'Token API',
+        'api-test-token' => 'Token API Pengujian',
         'clover' => 'Clover',
         'clover-info' => 'Terima pembayaran melalui halaman Clover Hosted Checkout. Buat token API e-commerce dengan tipe Hosted Checkout dari Dasbor Pedagang Clover dan daftarkan URL webhook toko (https://your-store.com/clover/webhook) di halaman pengaturan Hosted Checkout bersama kunci tanda tangannya.',
         'merchant-id' => 'ID Merchant',

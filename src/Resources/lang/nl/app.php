@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'API-token',
+        'api-test-token' => 'API-testtoken',
         'clover' => 'Clover',
         'clover-info' => 'Accepteer betalingen via de Clover Hosted Checkout-pagina. Genereer een e-commerce API-token van het type Hosted Checkout in het Clover Merchant Dashboard en registreer de webhook-URL van de winkel (https://your-store.com/clover/webhook) op de Hosted Checkout-instellingenpagina samen met de handtekeningsleutel.',
         'merchant-id' => 'Handelaar ID',

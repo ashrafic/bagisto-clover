@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'Token de API',
+        'api-test-token' => 'Token de API de pruebas',
         'clover' => 'Clover',
         'clover-info' => 'Acepte pagos a través de la página de Clover Hosted Checkout. Genere un token de API de comercio electrónico del tipo Hosted Checkout en el panel de comerciantes de Clover y registre la URL del webhook de su tienda (https://your-store.com/clover/webhook) en la página de configuración de Hosted Checkout junto con su secreto de firma.',
         'merchant-id' => 'ID de comerciante',

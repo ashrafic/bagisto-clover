@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'APIトークン',
+        'api-test-token' => 'テストAPIトークン',
         'clover' => 'Clover',
         'clover-info' => 'Cloverホストチェックアウトページで支払いを受け付けます。CloverマーチャントダッシュボードでHosted CheckoutタイプのEコマースAPIトークンを生成し、ストアのWebhook URL（https://your-store.com/clover/webhook）を署名キーとともにHosted Checkout設定ページに登録してください。',
         'merchant-id' => 'マーチャントID',

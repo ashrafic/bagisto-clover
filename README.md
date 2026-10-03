@@ -90,7 +90,7 @@ return [
 1. Log in to the [Clover Merchant Dashboard](https://www.clover.com/).
 2. Go to **Settings → View all settings → Ecommerce → Hosted Checkout**.
 3. Generate an **Ecommerce API token** for the **Hosted Checkout** integration type:
-   - The **private key** is your API key (Bearer token)
+   - The **private token** is your API token (Bearer token)
    - Note your **merchant ID** (`mId`)
 4. In the **Webhook** section, enter `https://your-store.com/clover/webhook`, click **Generate** and copy the **signing secret**.
 5. Leave the dashboard **redirect URLs empty** — the package sends per-transaction redirect URLs (`/clover/success`, `/clover/cancel`) with the checkout session id embedded, and dashboard values would override them.
@@ -104,9 +104,9 @@ In the Bagisto admin: **Configure → Sales → Payment Methods → Clover**.
 | Status | Enable/disable the method |
 | Title / Description | Shown at checkout (per channel and locale) |
 | Logo | Payment method logo shown at checkout |
-| Merchant ID / API Key / Webhook Signing Secret | Production credentials |
+| Merchant ID / API Token / Webhook Signing Secret | Production credentials |
 | Sandbox | Toggle between sandbox and production credentials |
-| Test Merchant ID / Test API Key / Test Webhook Signing Secret | Sandbox credentials |
+| Test Merchant ID / Test API Token / Test Webhook Signing Secret | Sandbox credentials |
 | Page Config UUID | Optional UUID when using multiple Hosted Checkout page configurations |
 
 ## Testing

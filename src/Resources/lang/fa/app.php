@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'توکن API',
+        'api-test-token' => 'توکن API آزمایشی',
         'clover' => 'Clover',
         'clover-info' => 'پرداخت‌ها را از طریق صفحه Clover Hosted Checkout بپذیرید. یک توکن API تجارت الکترونیک از نوع Hosted Checkout در داشبورد پذیرنده Clover ایجاد کنید و URL وب‌هوک فروشگاه (https://your-store.com/clover/webhook) را همراه با کلید امضا در صفحه تنظیمات Hosted Checkout ثبت کنید.',
         'merchant-id' => 'شناسه فروشنده',

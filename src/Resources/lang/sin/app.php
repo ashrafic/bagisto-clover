@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'API Token',
+        'api-test-token' => 'Test API Token',
         'clover' => 'Clover',
         'clover-info' => 'Clover හෝස්ට් කළ චෙක්අවුට් පිටුව හරහා ගෙවීම් භාර ගන්න. Clover වෙළඳ පුවරුවෙන් හෝස්ට් කළ චෙක්අවුට් වර්ගයේ විද්‍යුත් වාණිජ්‍ය API ටෝකනයක් ජනනය කර කඩයේ වෙබ්හූක් URL (https://your-store.com/clover/webhook) අත්සන් රහසත් සමඟ හෝස්ට් කළ චෙක්අවුට් සැකසුම් පිටුවේ ලියාපදිංචි කරන්න.',
         'merchant-id' => 'වෙළඳ හැඳුනුම්පත',

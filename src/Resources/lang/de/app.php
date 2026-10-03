@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'API-Token',
+        'api-test-token' => 'API-Test-Token',
         'clover' => 'Clover',
         'clover-info' => 'Zahlungen über die Clover-Hosted-Checkout-Seite akzeptieren. Erstellen Sie ein Ecommerce-API-Token vom Typ Hosted Checkout im Clover-Händler-Dashboard und registrieren Sie die Webhook-URL Ihres Shops (https://your-store.com/clover/webhook) auf der Hosted-Checkout-Einstellungsseite zusammen mit dem Signaturschlüssel.',
         'merchant-id' => 'Händler-ID',

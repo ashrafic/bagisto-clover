@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'API 令牌',
+        'api-test-token' => '测试 API 令牌',
         'clover' => 'Clover',
         'clover-info' => '通过 Clover 托管结账页面接受付款。在 Clover 商家控制面板中生成托管结账类型的电子商务 API 令牌，并在托管结账设置页面上注册商店的 Webhook URL（https://your-store.com/clover/webhook）及其签名密钥。',
         'merchant-id' => '商户ID',

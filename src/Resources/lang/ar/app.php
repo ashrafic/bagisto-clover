@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'رمز API',
+        'api-test-token' => 'رمز API تجريبي',
         'clover' => 'Clover',
         'clover-info' => 'اقبل المدفوعات عبر صفحة Clover Hosted Checkout. أنشئ رمز واجهة برمجة التطبيقات للتجارة الإلكترونية من نوع Hosted Checkout من لوحة تحكم تاجر Clover وسجّل عنوان URL الخاص بالويب هوك للمتجر (https://your-store.com/clover/webhook) في صفحة إعدادات Hosted Checkout مع مفتاح التوقيع.',
         'merchant-id' => 'معرّف التاجر',

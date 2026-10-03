@@ -22,6 +22,8 @@ return [
     ],
 
     'configuration' => [
+        'api-token' => 'Jeton d\'API',
+        'api-test-token' => 'Jeton d\'API de test',
         'clover' => 'Clover',
         'clover-info' => 'Acceptez les paiements via la page Clover Hosted Checkout. Générez un jeton d\\\'API e-commerce de type Hosted Checkout depuis le tableau de bord marchand Clover et enregistrez l\\\'URL du webhook de la boutique (https://your-store.com/clover/webhook) sur la page des paramètres Hosted Checkout avec sa clé de signature.',
         'merchant-id' => 'ID marchand',
