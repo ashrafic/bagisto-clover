@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented in this file.
 
+## v1.0.4
+
+- Test suite is now hermetic: existing channel configuration is backed up before each test and restored afterwards, so tests pass on stores that already have Clover configured
+
 ## v1.0.3
 
 - Webhook route is now stateless (throttled, no session/CSRF middleware) — installs no longer need a CSRF exemption in the host app

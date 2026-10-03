@@ -12,6 +12,10 @@ use Webkul\Sales\Models\OrderTransaction;
 beforeEach(function () {
     config(['services.clover.webhook_wait' => 0]);
 
+    $this->cloverConfigBackup = CoreConfig::where('code', 'like', 'sales.payment_methods.clover%')->get()->toArray();
+
+    CoreConfig::where('code', 'like', 'sales.payment_methods.clover%')->delete();
+
     CoreConfig::factory()->create([
         'code' => 'sales.payment_methods.clover.active',
         'value' => '1',
@@ -41,6 +45,14 @@ beforeEach(function () {
         'value' => 'wh_secret_test',
         'channel_code' => 'default',
     ]);
+});
+
+afterEach(function () {
+    CoreConfig::where('code', 'like', 'sales.payment_methods.clover%')->delete();
+
+    if (! empty($this->cloverConfigBackup)) {
+        CoreConfig::insert($this->cloverConfigBackup);
+    }
 });
 
 it('redirects to cart when clover credentials are invalid', function () {

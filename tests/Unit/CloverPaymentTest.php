@@ -4,7 +4,19 @@ use Webkul\Clover\Payment\Clover;
 use Webkul\Core\Models\CoreConfig;
 
 beforeEach(function () {
+    $this->cloverConfigBackup = CoreConfig::where('code', 'like', 'sales.payment_methods.clover%')->get()->toArray();
+
+    CoreConfig::where('code', 'like', 'sales.payment_methods.clover%')->delete();
+
     $this->clover = app(Clover::class);
+});
+
+afterEach(function () {
+    CoreConfig::where('code', 'like', 'sales.payment_methods.clover%')->delete();
+
+    if (! empty($this->cloverConfigBackup)) {
+        CoreConfig::insert($this->cloverConfigBackup);
+    }
 });
 
 it('returns the correct payment method code', function () {
