@@ -4,7 +4,6 @@ namespace Webkul\Clover\Helpers;
 
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Clover\Contracts\CloverCheckoutSession;
-use Webkul\Clover\Contracts\CloverCheckoutSession as CloverCheckoutSessionContract;
 use Webkul\Clover\Repositories\CloverCheckoutSessionRepository;
 use Webkul\Sales\Contracts\Order;
 use Webkul\Sales\Repositories\InvoiceRepository;
@@ -41,14 +40,31 @@ class PaymentProcessor
             return null;
         }
 
-        if ($checkoutSession->status === CloverCheckoutSessionContract::STATUS_PROCESSED) {
+        if ($checkoutSession->status === CloverCheckoutSession::STATUS_PROCESSED) {
             return $this->findOrderByCartId($checkoutSession->cart_id);
         }
 
         $cart = $checkoutSession->cart;
 
         if (! $cart || ! $cart->is_active) {
-            return $this->findOrderByCartId($checkoutSession->cart_id);
+            $order = $this->findOrderByCartId($checkoutSession->cart_id);
+
+            if ($order) {
+                $this->cloverCheckoutSessionRepository->update([
+                    'status' => CloverCheckoutSession::STATUS_PROCESSED,
+                ], $checkoutSession->id);
+            }
+
+            return $order;
+        }
+
+        if ($order = $this->findOrderByCartId($cart->id)) {
+            $this->cloverCheckoutSessionRepository->update([
+                'status' => CloverCheckoutSession::STATUS_PROCESSED,
+                'verified_via' => $checkoutSession->verified_via ?? $verifiedVia,
+            ], $checkoutSession->id);
+
+            return $order;
         }
 
         Cart::setCart($cart);
@@ -79,7 +95,7 @@ class PaymentProcessor
         $this->orderRepository->update(['status' => 'processing'], $order->id);
 
         $this->cloverCheckoutSessionRepository->update([
-            'status' => CloverCheckoutSessionContract::STATUS_PROCESSED,
+            'status' => CloverCheckoutSession::STATUS_PROCESSED,
             'verified_via' => $verifiedVia,
         ], $checkoutSession->id);
 

@@ -2,6 +2,20 @@
 
 All notable changes to this package are documented in this file.
 
+## v1.1.0
+
+- **Idempotency hardening**: order processing now reuses an existing order for the cart instead of ever creating a duplicate — protects against webhook/redirect races and partial webhook failures
+- The success return and webhook endpoints catch `\Throwable`, so an unexpected error can never surface as a raw 500 to the customer; failures are logged and degrade to a readable redirect
+- Regression tests for the un-interpolated `{CHECKOUT_SESSION_ID}` placeholder and the partial-failure scenario
+
+## v1.0.9
+
+- Renamed the admin field labels to match Clover's own terminology: **API Token** and **API Test Token** (stored field names unchanged — existing configuration keeps working)
+
+## v1.0.8
+
+- Code style fix on the controller
+
 ## v1.0.7
 
 - Default checkout logo now follows the Laravel asset publishing standard: `php artisan vendor:publish --tag=clover` copies it to `public/vendor/clover/images/`; the admin-uploaded logo still takes precedence
