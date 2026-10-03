@@ -126,14 +126,17 @@ In the Bagisto admin: **Configure → Sales → Payment Methods → Clover**.
 
 1. Create a free account on the [Clover Developer Dashboard](https://docs.clover.com/dev/docs/gdp-create-global-developer-account) — a sandbox test merchant is provisioned automatically.
 2. Configure the sandbox credentials in the admin (sandbox enabled) and set `APP_URL` to an HTTPS URL (use a tunnel such as [ngrok](https://ngrok.com/) for local development).
-3. Check out and pay with the test card:
+3. Check out and pay with the test cards (per [Clover's test card numbers](https://docs.clover.com/dev/docs/test-card-numbers)):
 
-    | Field | Value |
+    | Scenario | Card number |
     | --- | --- |
-    | Card number | `6011 3610 0000 6668` |
-    | Expiry | any future date |
-    | CVV | any 3 digits |
-    | ZIP | any 5 digits |
+    | Successful payment | `4242 4242 4242 4242` |
+    | Successful payment (debit) | `4000 0566 5566 5556` |
+    | Declined payment | `4264 2815 1111 7771` |
+
+    Expiry: any future date · CVV: any 3 digits · ZIP: any 5 digits.
+
+    Note that Clover's sandbox approves transactions **below $100.00** and returns an error above it — keep the test cart total under $100.
 
 ### Test suite
 
