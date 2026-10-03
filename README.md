@@ -166,6 +166,14 @@ uses(CloverTestCase::class)->in('../vendor/ashrafic/bagisto-clover/tests');
 
 The feature suite covers the full payment flow: redirect processing, webhook-first processing, the webhook/redirect race, signature rejection and declined payments — no real Clover account required.
 
+## Troubleshooting
+
+Open **`/clover/admin/diagnostics`** in the store (any logged-in admin) — it shows:
+
+- the channel's configuration state (sandbox ON/OFF, token/merchant/webhook-secret set)
+- the checkout sessions audit trail (status, payment id, verification source)
+- the last 100 Clover entries from the application logs
+
 ## Notes
 
 - Hosted Checkout charges in the merchant's Clover currency — it must match your store's base currency.

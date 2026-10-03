@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented in this file.
 
+## v2.0.3
+
+- Added an admin diagnostics page (`/clover/admin/diagnostics`, any logged-in admin): shows the channel's sandbox/token configuration state, the checkout sessions audit trail and the recent Clover log entries — so payment failures can be diagnosed from the admin panel without server access
+
 ## v2.0.2
 
 - Cart discounts are no longer sent as a negative line item (undocumented in Clover's hosted checkout API and a likely gateway rejection); the discount is now folded into the item lines so every price stays positive and the line item sum matches the cart grand total exactly

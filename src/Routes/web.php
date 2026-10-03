@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Webkul\Clover\Http\Controllers\Admin\DiagnosticsController;
 use Webkul\Clover\Http\Controllers\CloverController;
 
 Route::controller(CloverController::class)
@@ -17,3 +18,7 @@ Route::controller(CloverController::class)
 Route::post('clover/webhook', [CloverController::class, 'webhook'])
     ->middleware('throttle:60,1')
     ->name('clover.payment.webhook');
+
+Route::get('clover/admin/diagnostics', [DiagnosticsController::class, 'index'])
+    ->middleware(['web', 'admin'])
+    ->name('clover.admin.diagnostics');

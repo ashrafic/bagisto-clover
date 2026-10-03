@@ -30,6 +30,8 @@ class CloverServiceProvider extends ServiceProvider
 
         $this->loadTranslationsFrom(__DIR__.'/../Resources/lang', 'clover');
 
+        $this->loadViewsFrom(__DIR__.'/../Resources/views', 'clover');
+
         $this->publishes([
             __DIR__.'/../Resources/assets' => public_path('vendor/clover'),
         ], 'clover');
