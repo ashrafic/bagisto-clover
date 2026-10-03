@@ -239,7 +239,7 @@ it('rejects a webhook with an invalid signature', function () {
     $response->assertStatus(401);
 
     expect(OrderTransaction::where('transaction_id', 'clover_cs_invalid_sig')->count())->toBe(0)
-        ->and(CloverCheckoutSessionModel::count())->toBe(0);
+        ->and(CloverCheckoutSessionModel::where('checkout_session_id', 'clover_cs_invalid_sig')->count())->toBe(0);
 });
 
 it('rejects a webhook when no signing secret is configured', function () {

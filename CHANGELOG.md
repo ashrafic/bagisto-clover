@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented in this file.
 
+## v1.0.5
+
+- Scoped all feature test assertions to the data each test creates — the suite now passes on stores with existing Clover orders and sessions
+
 ## v1.0.4
 
 - Test suite is now hermetic: existing channel configuration is backed up before each test and restored afterwards, so tests pass on stores that already have Clover configured
