@@ -55,7 +55,7 @@ You also need a Clover merchant account with **Hosted Checkout** enabled (Ecomme
 composer require ashrafic/bagisto-clover
 ```
 
-Register the module in `config/concord.php` (inside the `modules` array):
+Register the module in `config/concord.php` (inside the `modules` array) — this is the only manual step, and it is required by Bagisto's module system for every package:
 
 ```php
 Webkul\Clover\Providers\ModuleServiceProvider::class,
@@ -68,7 +68,7 @@ php artisan migrate
 php artisan optimize:clear
 ```
 
-The `CloverServiceProvider` is auto-discovered. If your app disables package discovery, register it manually in `bootstrap/providers.php`:
+That's it — no core file edits are needed. The `CloverServiceProvider` is auto-discovered, the webhook route is CSRF-exempt by design (stateless, throttled), and the migration creates the `clover_checkout_sessions` table. If your app disables package discovery, register the provider manually in `bootstrap/providers.php`:
 
 ```php
 use Webkul\Clover\Providers\CloverServiceProvider;
@@ -78,6 +78,11 @@ return [
     CloverServiceProvider::class,
 ];
 ```
+
+### When does Clover appear in the store?
+
+- **Admin**: the configuration page (Configure → Sales → Payment Methods → Clover) appears automatically after installation.
+- **Checkout**: the payment method only appears when it is actually usable — the admin must set **Status** to ON **and** provide valid credentials for the active mode (sandbox or production). A payment method without credentials is hidden on purpose, so customers can never reach a dead-end at redirect.
 
 ## Clover dashboard setup
 
