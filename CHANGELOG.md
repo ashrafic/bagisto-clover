@@ -2,6 +2,11 @@
 
 All notable changes to this package are documented in this file.
 
+## v2.0.0
+
+- **Restructured to Bagisto's canonical redirect-payment flow** (same as PayPal Standard): the order is created and the cart is deactivated in the customer's own success-return request, so the cart clears naturally — including the browser session binding. The webhook now behaves like Bagisto's PayPal IPN: it settles an existing order (status, invoice, transaction) and only creates the order itself when the customer never made it back to the store
+- No cart/session manipulation happens outside the customer's request anymore
+
 ## v1.1.0
 
 - **Idempotency hardening**: order processing now reuses an existing order for the cart instead of ever creating a duplicate — protects against webhook/redirect races and partial webhook failures

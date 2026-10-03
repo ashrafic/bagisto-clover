@@ -71,7 +71,7 @@ class CloverController extends Controller
             ]);
 
             return redirect($checkoutSession->href);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             report($e);
 
             session()->flash('error', trans('clover::app.response.payment-failed'));
@@ -82,6 +82,8 @@ class CloverController extends Controller
 
     /**
      * Handle the success redirect back from the Clover hosted checkout page.
+     * Following Bagisto's standard payment flow, the order is created here in
+     * the customer's own request, so the cart session is cleared naturally.
      *
      * @return RedirectResponse
      */
@@ -105,26 +107,39 @@ class CloverController extends Controller
                 return redirect()->route('shop.checkout.cart.index');
             }
 
-            if (in_array($checkoutSession->status, [
-                CloverCheckoutSessionContract::STATUS_PAID,
-                CloverCheckoutSessionContract::STATUS_PROCESSED,
-            ])) {
-                return $this->redirectToExistingOrder($checkoutSession);
+            if ($checkoutSession->status === CloverCheckoutSessionContract::STATUS_NEW) {
+                $this->awaitWebhook($checkoutSession);
+
+                $checkoutSession = $checkoutSession->fresh();
             }
 
-            $this->awaitWebhook($checkoutSession);
-
-            $verifiedVia = $checkoutSession->fresh()->status === CloverCheckoutSessionContract::STATUS_PAID
+            $verifiedVia = $checkoutSession->status === CloverCheckoutSessionContract::STATUS_PAID
                 ? CloverCheckoutSessionContract::VERIFIED_VIA_WEBHOOK
                 : CloverCheckoutSessionContract::VERIFIED_VIA_REDIRECT;
 
-            $order = $this->paymentProcessor->process($checkoutSession->fresh(), $verifiedVia);
+            $order = $this->paymentProcessor->findOrderByCartId($checkoutSession->cart_id);
 
             if (! $order) {
-                session()->flash('error', trans('clover::app.response.verification-failed'));
+                $cart = Cart::getCart() ?: $checkoutSession->cart;
 
-                return redirect()->route('shop.checkout.cart.index');
+                if (! $cart) {
+                    session()->flash('error', trans('clover::app.response.verification-failed'));
+
+                    return redirect()->route('shop.checkout.cart.index');
+                }
+
+                $order = $this->paymentProcessor->createOrder($cart, $checkoutSession, $verifiedVia);
+
+                if ($cart->is_active) {
+                    Cart::setCart($cart);
+
+                    Cart::deActivateCart();
+                }
+            } elseif ($checkoutSession->status !== CloverCheckoutSessionContract::STATUS_PROCESSED) {
+                $this->paymentProcessor->markProcessed($checkoutSession, $verifiedVia);
             }
+
+            $order = $this->paymentProcessor->settle($order, $checkoutSession->fresh());
 
             session()->flash('order_id', $order->id);
 
@@ -159,7 +174,9 @@ class CloverController extends Controller
     }
 
     /**
-     * Handle the Clover hosted checkout webhook.
+     * Handle the Clover hosted checkout webhook. Like Bagisto's PayPal IPN
+     * listener, it settles an already created order; it only falls back to
+     * creating the order itself when the customer never made it back.
      *
      * @return Response
      */
@@ -193,32 +210,46 @@ class CloverController extends Controller
 
         $paymentId = $data['id'] ?? null;
 
-        if (($data['status'] ?? null) === self::WEBHOOK_STATUS_APPROVED) {
-            if ($checkoutSession->status === CloverCheckoutSessionContract::STATUS_PROCESSED) {
-                if ($paymentId && ! $checkoutSession->payment_id) {
-                    $this->cloverCheckoutSessionRepository->update(['payment_id' => $paymentId], $checkoutSession->id);
-                }
-
-                return response('OK');
+        if (($data['status'] ?? null) !== self::WEBHOOK_STATUS_APPROVED) {
+            if ($checkoutSession->status === CloverCheckoutSessionContract::STATUS_NEW) {
+                $this->cloverCheckoutSessionRepository->update([
+                    'status' => CloverCheckoutSessionContract::STATUS_FAILED,
+                ], $checkoutSession->id);
             }
 
+            return response('OK');
+        }
+
+        if ($checkoutSession->status === CloverCheckoutSessionContract::STATUS_NEW) {
             $this->cloverCheckoutSessionRepository->update([
                 'status' => CloverCheckoutSessionContract::STATUS_PAID,
                 'payment_id' => $paymentId,
                 'verified_via' => CloverCheckoutSessionContract::VERIFIED_VIA_WEBHOOK,
             ], $checkoutSession->id);
 
-            try {
-                $this->paymentProcessor->process($checkoutSession->fresh(), CloverCheckoutSessionContract::VERIFIED_VIA_WEBHOOK);
-            } catch (\Throwable $e) {
-                report($e);
+            $checkoutSession = $checkoutSession->fresh();
+        }
 
-                return response('Processing error', Response::HTTP_INTERNAL_SERVER_ERROR);
+        try {
+            if ($order = $this->paymentProcessor->findOrderByCartId($checkoutSession->cart_id)) {
+                if ($paymentId && ! $checkoutSession->payment_id) {
+                    $this->cloverCheckoutSessionRepository->update(['payment_id' => $paymentId], $checkoutSession->id);
+                }
+
+                $this->paymentProcessor->settle($order, $checkoutSession);
+            } elseif (($cart = $checkoutSession->cart) && $cart->is_active) {
+                $order = $this->paymentProcessor->createOrder($cart, $checkoutSession, CloverCheckoutSessionContract::VERIFIED_VIA_WEBHOOK);
+
+                Cart::setCart($cart);
+
+                Cart::deActivateCart();
+
+                $this->paymentProcessor->settle($order, $checkoutSession);
             }
-        } elseif ($checkoutSession->status === CloverCheckoutSessionContract::STATUS_NEW) {
-            $this->cloverCheckoutSessionRepository->update([
-                'status' => CloverCheckoutSessionContract::STATUS_FAILED,
-            ], $checkoutSession->id);
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response('Processing error', Response::HTTP_INTERNAL_SERVER_ERROR);
         }
 
         return response('OK');
@@ -228,7 +259,7 @@ class CloverController extends Controller
      * Resolve the checkout session of the current request, first from the
      * session identifier parameter, then from the customer's active cart.
      *
-     * @return CloverCheckoutSessionContract|null
+     * @return CloverCheckoutSession|null
      */
     protected function resolveCheckoutSession()
     {
@@ -260,34 +291,12 @@ class CloverController extends Controller
         $attempts = $waitSeconds * 2;
 
         for ($i = 0; $i < $attempts; $i++) {
-            if ($checkoutSession->fresh()->status === CloverCheckoutSessionContract::STATUS_PAID) {
+            if ($checkoutSession->fresh()->status !== CloverCheckoutSessionContract::STATUS_NEW) {
                 return;
             }
 
             usleep(500000);
         }
-    }
-
-    /**
-     * Redirect the customer to the order success page when the webhook has
-     * already processed the payment, or back to the cart otherwise.
-     *
-     * @param  CloverCheckoutSession  $checkoutSession
-     * @return RedirectResponse
-     */
-    protected function redirectToExistingOrder($checkoutSession)
-    {
-        if ($order = $this->paymentProcessor->findOrderByCartId($checkoutSession->cart_id)) {
-            session()->flash('order_id', $order->id);
-
-            session()->flash('success', trans('clover::app.response.payment-success'));
-
-            return redirect()->route('shop.checkout.onepage.success');
-        }
-
-        session()->flash('error', trans('clover::app.response.cart-processed'));
-
-        return redirect()->route('shop.checkout.cart.index');
     }
 
     /**

@@ -15,16 +15,20 @@ Checkout ──▶ Create session ──▶ Clover Hosted Checkout page ──�
                                                                      │
               ┌──────────────────────────────────────────────────────┤
               │                                                      ▼
-        Signed webhook                                    Redirect back to store
-        (HMAC-SHA256)                                     (?session_id=...)
+        Signed webhook                                     Redirect back to store
+        (HMAC-SHA256)                                     (/clover/success)
               │                                                      │
-              └─────────────▶ idempotent order processor ◀───────────┘
-                                    │
-                     order + invoice + transaction, cart deactivated
+              │ settles the order                          creates the order,
+              │ (status + invoice                          deactivates the cart
+              │  + transaction)                                 naturally
+              └─────────────────▶ one order per payment ◀──────────┘
 ```
 
-- The **webhook** (`POST clover/webhook`) is the authoritative payment confirmation. Its `Clover-Signature` header is verified with HMAC-SHA256 against your signing secret; unsigned or forged requests are rejected with `401`.
-- The **redirect return** also completes the order. If the webhook has not landed yet, the store waits a few seconds for it, then processes on redirect authority. Whichever arrives first creates the order — the handler is fully idempotent.
+Following Bagisto's standard flow for redirect payments (the same shape as PayPal Standard + IPN):
+
+- The **success return** (`/clover/success`) creates the order and deactivates the cart inside the customer's own request — exactly like Bagisto core does it, so the cart and its session binding are cleared naturally.
+- The **webhook** (`POST clover/webhook`) is the server-side payment verification. Its `Clover-Signature` header is verified with HMAC-SHA256 against your signing secret; unsigned or forged requests are rejected with `401`. It settles the order (status, invoice, transaction) — and if the customer's browser never made it back, it creates the order itself so a paid checkout is never lost.
+- Both paths are idempotent: one order per payment, no duplicates regardless of which arrives first or how often the webhook retries.
 - Every session is tracked in the `clover_checkout_sessions` table (status, payment id, verification source), giving you a full audit trail per checkout attempt.
 
 ## Features
