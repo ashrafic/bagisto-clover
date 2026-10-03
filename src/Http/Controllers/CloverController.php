@@ -222,7 +222,7 @@ class CloverController extends Controller
      * Resolve the checkout session of the current request, first from the
      * session identifier parameter, then from the customer's active cart.
      *
-     * @return \Webkul\Clover\Contracts\CloverCheckoutSession|null
+     * @return CloverCheckoutSessionContract|null
      */
     protected function resolveCheckoutSession()
     {
