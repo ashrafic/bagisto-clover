@@ -219,18 +219,6 @@ class CloverController extends Controller
     }
 
     /**
-     * Serve the default Clover payment method logo shipped with the package.
-     *
-     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse
-     */
-    public function logo()
-    {
-        return response()->file(__DIR__.'/../../Resources/assets/images/clover.png', [
-            'Cache-Control' => 'public, max-age=86400',
-        ]);
-    }
-
-    /**
      * Resolve the checkout session of the current request, first from the
      * session identifier parameter, then from the customer's active cart.
      *

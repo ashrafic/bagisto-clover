@@ -24,6 +24,10 @@ class CloverServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../Database/Migrations');
 
         $this->loadTranslationsFrom(__DIR__.'/../Resources/lang', 'clover');
+
+        $this->publishes([
+            __DIR__.'/../Resources/assets' => public_path('vendor/clover'),
+        ], 'clover');
     }
 
     /**

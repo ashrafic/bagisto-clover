@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented in this file.
 
+## v1.0.7
+
+- Default checkout logo now follows the Laravel asset publishing standard: `php artisan vendor:publish --tag=clover` copies it to `public/vendor/clover/images/`; the admin-uploaded logo still takes precedence
+
 ## v1.0.6
 
 - Default checkout logo is now served by the package itself (`/clover/logo`) — host apps no longer need to copy any asset into the shop theme; the admin-uploaded logo still takes precedence

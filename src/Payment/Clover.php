@@ -82,7 +82,11 @@ class Clover extends Payment
             return Storage::url($url);
         }
 
-        return route('clover.logo');
+        if (file_exists(public_path('vendor/clover/images/clover.png'))) {
+            return asset('vendor/clover/images/clover.png');
+        }
+
+        return '';
     }
 
     /**

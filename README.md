@@ -61,14 +61,15 @@ Register the module in `config/concord.php` (inside the `modules` array) — thi
 Webkul\Clover\Providers\ModuleServiceProvider::class,
 ```
 
-Run the migration and refresh:
+Run the migration, publish the checkout logo and refresh:
 
 ```bash
 php artisan migrate
+php artisan vendor:publish --tag=clover
 php artisan optimize:clear
 ```
 
-That's it — no core file edits are needed. The `CloverServiceProvider` is auto-discovered, the webhook route is CSRF-exempt by design (stateless, throttled), and the migration creates the `clover_checkout_sessions` table. If your app disables package discovery, register the provider manually in `bootstrap/providers.php`:
+That's it — no core file edits are needed. The webhook route is CSRF-exempt by design (stateless, throttled), and the migration creates the `clover_checkout_sessions` table. If your app disables package discovery, register the provider manually in `bootstrap/providers.php`:
 
 ```php
 use Webkul\Clover\Providers\CloverServiceProvider;
@@ -92,7 +93,7 @@ return [
    - The **private key** is your API key (Bearer token)
    - Note your **merchant ID** (`mId`)
 4. In the **Webhook** section, enter `https://your-store.com/clover/webhook`, click **Generate** and copy the **signing secret**.
-5. Leave the dashboard redirect URLs empty — the package sends per-transaction redirect URLs.
+5. Leave the dashboard **redirect URLs empty** — the package sends per-transaction redirect URLs (`/clover/success`, `/clover/cancel`) with the checkout session id embedded, and dashboard values would override them.
 
 ## Configuration
 
