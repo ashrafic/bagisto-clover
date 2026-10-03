@@ -3,11 +3,22 @@
 namespace Webkul\Clover\Repositories;
 
 use Webkul\Clover\Contracts\CloverCheckoutSession;
-use Webkul\Clover\Contracts\CloverCheckoutSession as CloverCheckoutSessionContract;
 use Webkul\Core\Eloquent\Repository;
 
 class CloverCheckoutSessionRepository extends Repository
 {
+    /**
+     * This audit table must always be read fresh: the payment flow reads and
+     * writes session statuses across webhook, browser and console processes.
+     *
+     * @param  string  $method
+     * @return bool
+     */
+    public function allowedCache($method)
+    {
+        return false;
+    }
+
     /**
      * Specify model class name.
      *
@@ -15,20 +26,23 @@ class CloverCheckoutSessionRepository extends Repository
      */
     public function model()
     {
-        return CloverCheckoutSessionContract::class;
+        return CloverCheckoutSession::class;
     }
 
     /**
-     * Returns the latest pending session of the given cart.
+     * Returns the latest open session of the given cart.
      *
      * @param  int  $cartId
-     * @return CloverCheckoutSession|null
+     * @return \Webkul\Clover\Contracts\CloverCheckoutSession|null
      */
-    public function findLatestPendingForCart($cartId)
+    public function findLatestOpenForCart($cartId)
     {
         return $this->scopeQuery(function ($query) use ($cartId) {
             return $query->where('cart_id', $cartId)
-                ->where('status', CloverCheckoutSessionContract::STATUS_NEW)
+                ->whereIn('status', [
+                    CloverCheckoutSession::STATUS_NEW,
+                    CloverCheckoutSession::STATUS_PAID,
+                ])
                 ->orderBy('id', 'desc');
         })->first();
     }

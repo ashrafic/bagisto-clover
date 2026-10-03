@@ -5,6 +5,7 @@ use Webkul\Clover\Models\CloverCheckoutSession as CloverCheckoutSessionModel;
 use Webkul\Clover\Repositories\CloverCheckoutSessionRepository;
 use Webkul\Core\Models\CoreConfig;
 use Webkul\Sales\Models\Order;
+use Webkul\Sales\Models\OrderTransaction;
 
 beforeEach(function () {
     config(['services.clover.webhook_wait' => 0]);
@@ -40,6 +41,43 @@ afterEach(function () {
     }
 });
 
+it('settles abandoned paid checkout sessions whose customer never returned', function () {
+    // Arrange - paid session, browser never came back
+    $cart = $this->createCartWithItems('clover');
+
+    app(CloverCheckoutSessionRepository::class)->create([
+        'cart_id' => $cart->id,
+        'checkout_session_id' => 'clover_cs_abandoned_123',
+        'base_grand_total' => $cart->base_grand_total,
+        'currency_code' => 'USD',
+        'status' => CloverCheckoutSession::STATUS_PAID,
+        'payment_id' => 'clover_payment_abandoned_uuid',
+        'verified_via' => CloverCheckoutSession::VERIFIED_VIA_WEBHOOK,
+    ]);
+
+    CloverCheckoutSessionModel::where('checkout_session_id', 'clover_cs_abandoned_123')
+        ->update(['updated_at' => now()->subHours(2)]);
+
+    // Act
+    $this->artisan('clover:settle-abandoned', ['--minutes' => 60]);
+
+    // Assert
+    $order = Order::where('cart_id', $cart->id)->first();
+
+    expect($order)->not->toBeNull()
+        ->and($order->status)->toBe('processing')
+        ->and($order->payment->additional['clover_payment_id'])->toBe('clover_payment_abandoned_uuid');
+
+    expect(OrderTransaction::where('transaction_id', 'clover_cs_abandoned_123')->first())->not->toBeNull();
+
+    $cart->refresh();
+
+    expect($cart->is_active)->toBe(0);
+
+    expect(CloverCheckoutSessionModel::where('checkout_session_id', 'clover_cs_abandoned_123')->value('status'))
+        ->toBe(CloverCheckoutSession::STATUS_PROCESSED);
+});
+
 it('resolves the checkout session via the active cart when the session id placeholder is not interpolated', function () {
     // Arrange
     $cart = $this->createCartWithItems('clover');
@@ -63,8 +101,8 @@ it('resolves the checkout session via the active cart when the session id placeh
     expect(Order::where('cart_id', $cart->id)->count())->toBe(1);
 });
 
-it('never creates a duplicate order when a partial webhook failure left the session pending', function () {
-    // Arrange - webhook processed the payment but crashed before marking the session
+it('never creates a duplicate order when a partial failure left the session pending', function () {
+    // Arrange - the browser created the order but a failure left the session unprocessed
     $cart = $this->createCartWithItems('clover');
 
     app(CloverCheckoutSessionRepository::class)->create([
@@ -75,19 +113,12 @@ it('never creates a duplicate order when a partial webhook failure left the sess
         'status' => CloverCheckoutSession::STATUS_NEW,
     ]);
 
-    $this->postSignedWebhook([
-        'id' => 'clover_payment_partial_uuid',
-        'status' => 'APPROVED',
-        'type' => 'PAYMENT',
-        'data' => 'clover_cs_partial_123',
-    ]);
-
-    expect(Order::where('cart_id', $cart->id)->count())->toBe(1);
+    $this->get(route('clover.payment.success', ['session_id' => 'clover_cs_partial_123']));
 
     CloverCheckoutSessionModel::where('checkout_session_id', 'clover_cs_partial_123')
         ->update(['status' => CloverCheckoutSession::STATUS_NEW]);
 
-    // Act - the customer's browser now returns from Clover
+    // Act - the customer's browser hits the success return again
     $response = $this->get(route('clover.payment.success', ['session_id' => 'clover_cs_partial_123']));
 
     // Assert - the existing order is reused, nothing duplicated

@@ -152,7 +152,7 @@ it('successfully processes clover payment from the success redirect and creates 
     expect($cart->is_active)->toBe(0);
 });
 
-it('successfully processes clover payment from the webhook before the redirect returns', function () {
+it('marks the checkout session paid from the webhook without touching the cart or creating the order', function () {
     // Arrange
     $cart = $this->createCartWithItems('clover');
 
@@ -171,31 +171,22 @@ it('successfully processes clover payment from the webhook before the redirect r
         'data' => 'clover_cs_webhook_123',
     ]);
 
-    // Assert
+    // Assert - the webhook only confirms the payment, the browser return completes the order
     $response->assertOk();
-
-    $order = Order::where('customer_id', $cart->customer_id)->first();
-
-    expect($order)->not->toBeNull()
-        ->and($order->status)->toBe('processing')
-        ->and($order->payment->additional['clover_payment_id'])->toBe('clover_payment_uuid_123');
-
-    $orderTransaction = OrderTransaction::where('transaction_id', 'clover_cs_webhook_123')->first();
-
-    expect($orderTransaction)->not->toBeNull()
-        ->and($orderTransaction->order_id)->toBe($order->id);
-
-    $cart->refresh();
-
-    expect($cart->is_active)->toBe(0);
 
     $session = CloverCheckoutSessionModel::where('checkout_session_id', 'clover_cs_webhook_123')->first();
 
-    expect($session->status)->toBe(CloverCheckoutSession::STATUS_PROCESSED)
-        ->and($session->verified_via)->toBe(CloverCheckoutSession::VERIFIED_VIA_WEBHOOK);
+    expect($session->status)->toBe(CloverCheckoutSession::STATUS_PAID)
+        ->and($session->payment_id)->toBe('clover_payment_uuid_123')
+        ->and($session->verified_via)->toBe(CloverCheckoutSession::VERIFIED_VIA_WEBHOOK)
+        ->and(Order::where('cart_id', $cart->id)->count())->toBe(0);
+
+    $cart->refresh();
+
+    expect($cart->is_active)->toBe(1);
 });
 
-it('redirects the customer to the order success page when the webhook processed the payment first', function () {
+it('creates the order, clears the cart and shows the success page on return after the webhook confirmed the payment', function () {
     // Arrange
     $cart = $this->createCartWithItems('clover');
 
@@ -214,7 +205,7 @@ it('redirects the customer to the order success page when the webhook processed 
         'data' => 'clover_cs_dual_123',
     ]);
 
-    // Act
+    // Act - the customer's browser returns from Clover
     $response = $this->get(route('clover.payment.success', ['session_id' => 'clover_cs_dual_123']));
 
     // Assert
@@ -224,7 +215,22 @@ it('redirects the customer to the order success page when the webhook processed 
 
     $response->assertSessionHas('order_id');
 
-    expect(Order::where('cart_id', $cart->id)->count())->toBe(1);
+    $order = Order::where('cart_id', $cart->id)->first();
+
+    expect($order)->not->toBeNull()
+        ->and($order->status)->toBe('processing')
+        ->and($order->payment->additional['clover_payment_id'])->toBe('clover_payment_uuid_dual')
+        ->and($order->payment->additional['clover_verified_via'])->toBe(CloverCheckoutSession::VERIFIED_VIA_WEBHOOK);
+
+    expect(OrderTransaction::where('transaction_id', 'clover_cs_dual_123')->first())->not->toBeNull();
+
+    $cart->refresh();
+
+    expect($cart->is_active)->toBe(0);
+
+    $session = CloverCheckoutSessionModel::where('checkout_session_id', 'clover_cs_dual_123')->first();
+
+    expect($session->status)->toBe(CloverCheckoutSession::STATUS_PROCESSED);
 });
 
 it('rejects a webhook with an invalid signature', function () {

@@ -3,6 +3,7 @@
 namespace Webkul\Clover\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Webkul\Clover\Console\SettleAbandonedSessions;
 
 class CloverServiceProvider extends ServiceProvider
 {
@@ -12,6 +13,10 @@ class CloverServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerConfig();
+
+        $this->commands([
+            SettleAbandonedSessions::class,
+        ]);
     }
 
     /**

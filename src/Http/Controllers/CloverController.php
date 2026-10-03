@@ -236,15 +236,7 @@ class CloverController extends Controller
                     $this->cloverCheckoutSessionRepository->update(['payment_id' => $paymentId], $checkoutSession->id);
                 }
 
-                $this->paymentProcessor->settle($order, $checkoutSession);
-            } elseif (($cart = $checkoutSession->cart) && $cart->is_active) {
-                $order = $this->paymentProcessor->createOrder($cart, $checkoutSession, CloverCheckoutSessionContract::VERIFIED_VIA_WEBHOOK);
-
-                Cart::setCart($cart);
-
-                Cart::deActivateCart();
-
-                $this->paymentProcessor->settle($order, $checkoutSession);
+                $this->paymentProcessor->settle($order, $checkoutSession->fresh());
             }
         } catch (\Throwable $e) {
             report($e);
@@ -272,7 +264,7 @@ class CloverController extends Controller
         }
 
         if ($cart = Cart::getCart()) {
-            return $this->cloverCheckoutSessionRepository->findLatestPendingForCart($cart->id);
+            return $this->cloverCheckoutSessionRepository->findLatestOpenForCart($cart->id);
         }
 
         return null;

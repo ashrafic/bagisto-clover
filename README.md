@@ -26,8 +26,15 @@ Checkout ──▶ Create session ──▶ Clover Hosted Checkout page ──�
 
 Following Bagisto's standard flow for redirect payments (the same shape as PayPal Standard + IPN):
 
-- The **success return** (`/clover/success`) creates the order and deactivates the cart inside the customer's own request — exactly like Bagisto core does it, so the cart and its session binding are cleared naturally.
-- The **webhook** (`POST clover/webhook`) is the server-side payment verification. Its `Clover-Signature` header is verified with HMAC-SHA256 against your signing secret; unsigned or forged requests are rejected with `401`. It settles the order (status, invoice, transaction) — and if the customer's browser never made it back, it creates the order itself so a paid checkout is never lost.
+- The **success return** (`/clover/success`) creates the order and deactivates the cart inside the customer's own request — exactly like Bagisto core does it, so the cart and its session binding are cleared naturally and the customer lands on the order success page.
+- The **webhook** (`POST clover/webhook`) is the server-side payment verification. Its `Clover-Signature` header is verified with HMAC-SHA256 against your signing secret; unsigned or forged requests are rejected with `401`. It follows strict IPN semantics: it confirms the payment and settles an already-created order (status, invoice, transaction) — it never creates orders or touches carts, so it can never race the customer's browser.
+- If the customer's browser never makes it back, schedule the recovery command to create those orders offline:
+
+    ```bash
+    # e.g. every 15 minutes via cron or the Laravel scheduler
+    php artisan clover:settle-abandoned
+    ```
+
 - Both paths are idempotent: one order per payment, no duplicates regardless of which arrives first or how often the webhook retries.
 - Every session is tracked in the `clover_checkout_sessions` table (status, payment id, verification source), giving you a full audit trail per checkout attempt.
 

@@ -2,6 +2,11 @@
 
 All notable changes to this package are documented in this file.
 
+## v2.0.1
+
+- **Fixed the success-page regression of v2.0.0**: the webhook no longer creates orders or deactivates carts — strict IPN semantics. When it raced ahead of the customer's browser (the common case), the customer landed on the cart page instead of the order success page. Now the webhook only confirms the payment (and settles an already-created order); the customer's return always creates the order, deactivates the cart naturally and shows the success page
+- Added `clover:settle-abandoned` command for paid sessions whose customer never returned to the store (schedule it, e.g. every 15 minutes)
+
 ## v2.0.0
 
 - **Restructured to Bagisto's canonical redirect-payment flow** (same as PayPal Standard): the order is created and the cart is deactivated in the customer's own success-return request, so the cart clears naturally — including the browser session binding. The webhook now behaves like Bagisto's PayPal IPN: it settles an existing order (status, invoice, transaction) and only creates the order itself when the customer never made it back to the store
