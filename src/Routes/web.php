@@ -17,3 +17,6 @@ Route::controller(CloverController::class)
 Route::post('clover/webhook', [CloverController::class, 'webhook'])
     ->middleware('throttle:60,1')
     ->name('clover.payment.webhook');
+
+Route::get('clover/logo', [CloverController::class, 'logo'])
+    ->name('clover.logo');

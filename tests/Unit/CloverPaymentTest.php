@@ -326,6 +326,14 @@ it('returns payment method image from config', function () {
     expect($image)->toContain('clover/custom-logo.png');
 });
 
+it('returns the package logo route when no image is configured', function () {
+    // Act
+    $image = $this->clover->getImage();
+
+    // Assert
+    expect($image)->toBe(route('clover.logo'));
+});
+
 it('returns the correct redirect URL', function () {
     // Act
     $url = $this->clover->getRedirectUrl();

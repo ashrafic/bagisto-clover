@@ -82,11 +82,7 @@ class Clover extends Payment
             return Storage::url($url);
         }
 
-        try {
-            return bagisto_asset('images/clover.png', 'shop');
-        } catch (\Exception $e) {
-            return '';
-        }
+        return route('clover.logo');
     }
 
     /**
