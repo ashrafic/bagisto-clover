@@ -3,6 +3,7 @@
 namespace Webkul\Clover\Payment;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Webkul\Checkout\Facades\Cart;
@@ -175,12 +176,21 @@ class Clover extends Payment
                 ->post($this->getApiUrl().'/invoicingcheckoutservice/v1/checkouts', $this->preparePayload($cart));
 
             if (! $response->successful()) {
+                Log::warning('Clover checkout session creation failed.', [
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+
                 return false;
             }
 
             $session = $response->json();
 
             if (empty($session['href']) || empty($session['checkoutSessionId'])) {
+                Log::warning('Clover checkout session response is missing the href or session id.', [
+                    'response' => $session,
+                ]);
+
                 return false;
             }
 
@@ -274,6 +284,11 @@ class Clover extends Payment
     /**
      * Convert cart items, shipping and tax totals into hosted checkout line items.
      *
+     * Clover's hosted checkout has no discount parameter, so any cart discount
+     * is folded into the item lines: each item becomes a single line priced at
+     * its exact discounted line total, keeping every price positive and the
+     * line item sum equal to the cart grand total.
+     *
      * @param  \Webkul\Checkout\Contracts\Cart  $cart
      * @return array
      */
@@ -288,6 +303,12 @@ class Clover extends Payment
                 'price' => $this->formatAmount($item->base_price),
                 'unitQty' => (int) $item->quantity,
             ];
+        }
+
+        $discountCents = $this->formatAmount($cart->base_discount_amount);
+
+        if ($discountCents > 0) {
+            $lineItems = $this->applyDiscount($lineItems, $discountCents);
         }
 
         if ($cart->base_shipping_amount > 0) {
@@ -306,15 +327,51 @@ class Clover extends Payment
             ];
         }
 
-        if ($cart->base_discount_amount > 0) {
-            $lineItems[] = [
-                'name' => trans('clover::app.discount'),
-                'price' => -$this->formatAmount($cart->base_discount_amount),
+        return $lineItems;
+    }
+
+    /**
+     * Distribute the discount across item lines proportionally, without ever
+     * producing a negative line.
+     *
+     * @param  array  $itemLines
+     * @param  int  $discountCents
+     * @return array
+     */
+    private function applyDiscount($itemLines, $discountCents)
+    {
+        $lineCents = [];
+
+        foreach ($itemLines as $index => $line) {
+            $lineCents[$index] = $line['price'] * $line['unitQty'];
+        }
+
+        $totalCents = max(array_sum($lineCents), 1);
+
+        $shares = [];
+
+        $allocated = 0;
+
+        foreach ($lineCents as $index => $cents) {
+            $shares[$index] = (int) min(floor($discountCents * $cents / $totalCents), $cents);
+
+            $allocated += $shares[$index];
+        }
+
+        $shares[array_search(max($lineCents), $lineCents)] += $discountCents - $allocated;
+
+        $discountedLines = [];
+
+        foreach ($itemLines as $index => $line) {
+            $discountedLines[] = [
+                'name' => $line['name'],
+                'note' => $line['note'],
+                'price' => max($lineCents[$index] - $shares[$index], 0),
                 'unitQty' => 1,
             ];
         }
 
-        return $lineItems;
+        return $discountedLines;
     }
 
     /**

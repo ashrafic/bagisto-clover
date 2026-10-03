@@ -33,7 +33,7 @@ class CloverCheckoutSessionRepository extends Repository
      * Returns the latest open session of the given cart.
      *
      * @param  int  $cartId
-     * @return \Webkul\Clover\Contracts\CloverCheckoutSession|null
+     * @return CloverCheckoutSession|null
      */
     public function findLatestOpenForCart($cartId)
     {

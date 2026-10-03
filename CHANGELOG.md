@@ -2,6 +2,11 @@
 
 All notable changes to this package are documented in this file.
 
+## v2.0.2
+
+- Cart discounts are no longer sent as a negative line item (undocumented in Clover's hosted checkout API and a likely gateway rejection); the discount is now folded into the item lines so every price stays positive and the line item sum matches the cart grand total exactly
+- Clover API failures during session creation are now logged with the full gateway response, making declined/failed payments debuggable from `storage/logs`
+
 ## v2.0.1
 
 - **Fixed the success-page regression of v2.0.0**: the webhook no longer creates orders or deactivates carts — strict IPN semantics. When it raced ahead of the customer's browser (the common case), the customer landed on the cart page instead of the order success page. Now the webhook only confirms the payment (and settles an already-created order); the customer's return always creates the order, deactivates the cart naturally and shows the success page
