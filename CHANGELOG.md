@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented in this file.
 
+## v2.0.4
+
+- Diagnostics page now shows the last complete error entries (message + full stack trace) instead of only clover-matching lines
+
 ## v2.0.3
 
 - Added an admin diagnostics page (`/clover/admin/diagnostics`, any logged-in admin): shows the channel's sandbox/token configuration state, the checkout sessions audit trail and the recent Clover log entries — so payment failures can be diagnosed from the admin panel without server access

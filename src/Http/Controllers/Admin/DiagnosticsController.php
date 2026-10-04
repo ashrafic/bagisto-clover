@@ -47,22 +47,35 @@ class DiagnosticsController extends Controller
     }
 
     /**
-     * Returns the last clover-related entries of the laravel logs.
+     * Returns the last complete error entries related to clover, including
+     * their full stack traces.
      *
      * @return array
      */
     protected function getRecentCloverLogLines()
     {
-        $lines = [];
+        $entries = [];
 
         foreach (glob(storage_path('logs/laravel*.log')) ?: [] as $file) {
-            foreach (file($file) ?: [] as $line) {
-                if (stripos($line, 'clover') !== false) {
-                    $lines[] = basename($file).': '.trim($line);
+            $content = file_get_contents($file) ?: '';
+
+            $blocks = preg_split('/\n(?=\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\])/', $content);
+
+            foreach ($blocks as $block) {
+                if (stripos($block, 'clover') === false || stripos($block, '.ERROR') === false) {
+                    continue;
                 }
+
+                $blockLines = explode("\n", trim($block));
+
+                if (count($blockLines) > 120) {
+                    $blockLines = array_merge(array_slice($blockLines, 0, 20), ['… truncated …'], array_slice($blockLines, -100));
+                }
+
+                $entries[] = basename($file).': '.implode("\n", $blockLines);
             }
         }
 
-        return array_slice($lines, -100);
+        return array_slice($entries, -5);
     }
 }
