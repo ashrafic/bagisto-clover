@@ -30,19 +30,15 @@ class CloverCheckoutSessionRepository extends Repository
     }
 
     /**
-     * Returns the latest open session of the given cart.
+     * Returns the latest session of the given cart, whatever its state.
      *
      * @param  int  $cartId
      * @return CloverCheckoutSession|null
      */
-    public function findLatestOpenForCart($cartId)
+    public function findLatestForCart($cartId)
     {
         return $this->scopeQuery(function ($query) use ($cartId) {
             return $query->where('cart_id', $cartId)
-                ->whereIn('status', [
-                    CloverCheckoutSession::STATUS_NEW,
-                    CloverCheckoutSession::STATUS_PAID,
-                ])
                 ->orderBy('id', 'desc');
         })->first();
     }

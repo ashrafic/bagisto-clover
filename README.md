@@ -14,28 +14,22 @@ Customers are redirected to a PCI-compliant, Clover-hosted payment page — no c
 Checkout ──▶ Create session ──▶ Clover Hosted Checkout page ──▶ Customer pays
                                                                      │
               ┌──────────────────────────────────────────────────────┤
-              │                                                      ▼
+              ▼                                                      ▼
         Signed webhook                                     Redirect back to store
         (HMAC-SHA256)                                     (/clover/success)
               │                                                      │
-              │ settles the order                          creates the order,
-              │ (status + invoice                          deactivates the cart
-              │  + transaction)                                 naturally
-              └─────────────────▶ one order per payment ◀──────────┘
+   creates + settles the order                    reuses the order if it exists,
+   (idempotent — skips if                         otherwise creates it, then
+   one already exists),                           always clears the cart session
+   deactivates the cart                           and shows the success page
+              │                                                      │
+              └─────────────────▶ one order per payment ◀───────────┘
 ```
 
-Following Bagisto's standard flow for redirect payments (the same shape as PayPal Standard + IPN):
-
-- The **success return** (`/clover/success`) creates the order and deactivates the cart inside the customer's own request — exactly like Bagisto core does it, so the cart and its session binding are cleared naturally and the customer lands on the order success page.
-- The **webhook** (`POST clover/webhook`) is the server-side payment verification. Its `Clover-Signature` header is verified with HMAC-SHA256 against your signing secret; unsigned or forged requests are rejected with `401`. It follows strict IPN semantics: it confirms the payment and settles an already-created order (status, invoice, transaction) — it never creates orders or touches carts, so it can never race the customer's browser.
-- If the customer's browser never makes it back, schedule the recovery command to create those orders offline:
-
-    ```bash
-    # e.g. every 15 minutes via cron or the Laravel scheduler
-    php artisan clover:settle-abandoned
-    ```
-
-- Both paths are idempotent: one order per payment, no duplicates regardless of which arrives first or how often the webhook retries.
+- **Whichever arrives first settles the payment.** The webhook creates and settles the order idempotently (skipping creation when an order already exists), so a payment is recorded even if the customer's browser never makes it back. The success return reuses the webhook's order — waiting a few seconds for it to appear — or creates the order itself when no webhook arrived.
+- **Cart clearing is the browser's job, always.** On every return the cart is deactivated and the guest session binding cleared in the customer's own request — the only place it can be done — even when the webhook already deactivated the cart in the database.
+- The **webhook** (`POST clover/webhook`) verifies the `Clover-Signature` header with HMAC-SHA256 against your signing secret; unsigned or forged requests are rejected with `401`.
+- A payment whose customer *and* webhook both never made it back can still be recovered by scheduling `php artisan clover:settle-abandoned` (e.g. every 15 minutes).
 - Every session is tracked in the `clover_checkout_sessions` table (status, payment id, verification source), giving you a full audit trail per checkout attempt.
 
 ## Features
@@ -168,7 +162,7 @@ The feature suite covers the full payment flow: redirect processing, webhook-fir
 
 ## Troubleshooting
 
-Open **`/clover/admin/diagnostics`** in the store (any logged-in admin) — it shows:
+Open **`/{admin-url}/clover/diagnostics`** in the store (any logged-in admin) — it shows:
 
 - the channel's configuration state (sandbox ON/OFF, token/merchant/webhook-secret set)
 - the checkout sessions audit trail (status, payment id, verification source)

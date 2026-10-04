@@ -11,6 +11,7 @@ use Webkul\Clover\Contracts\CloverCheckoutSession as CloverCheckoutSessionContra
 use Webkul\Clover\Helpers\PaymentProcessor;
 use Webkul\Clover\Payment\Clover;
 use Webkul\Clover\Repositories\CloverCheckoutSessionRepository;
+use Webkul\Sales\Contracts\Order;
 
 class CloverController extends Controller
 {
@@ -119,6 +120,10 @@ class CloverController extends Controller
 
             $order = $this->paymentProcessor->findOrderByCartId($checkoutSession->cart_id);
 
+            if (! $order && $verifiedVia === CloverCheckoutSessionContract::VERIFIED_VIA_WEBHOOK) {
+                $order = $this->awaitOrder($checkoutSession);
+            }
+
             if (! $order) {
                 $cart = Cart::getCart() ?: $checkoutSession->cart;
 
@@ -129,24 +134,16 @@ class CloverController extends Controller
                 }
 
                 $order = $this->paymentProcessor->createOrder($cart, $checkoutSession, $verifiedVia);
+            }
 
-                if ($cart->is_active) {
-                    Cart::setCart($cart);
+            if ($cart = $checkoutSession->cart) {
+                Cart::setCart($cart);
 
-                    Cart::deActivateCart();
-                }
-            } else {
-                if ($cart = $checkoutSession->cart) {
-                    if ($cart->is_active) {
-                        Cart::setCart($cart);
+                Cart::deActivateCart();
+            }
 
-                        Cart::deActivateCart();
-                    }
-                }
-
-                if ($checkoutSession->status !== CloverCheckoutSessionContract::STATUS_PROCESSED) {
-                    $this->paymentProcessor->markProcessed($checkoutSession, $verifiedVia);
-                }
+            if ($checkoutSession->status !== CloverCheckoutSessionContract::STATUS_PROCESSED) {
+                $this->paymentProcessor->markProcessed($checkoutSession, $verifiedVia);
             }
 
             $order = $this->paymentProcessor->settle($order, $checkoutSession->fresh());
@@ -247,6 +244,14 @@ class CloverController extends Controller
                 }
 
                 $this->paymentProcessor->settle($order, $checkoutSession->fresh());
+            } elseif ($cart = $checkoutSession->cart) {
+                $order = $this->paymentProcessor->createOrder($cart, $checkoutSession, CloverCheckoutSessionContract::VERIFIED_VIA_WEBHOOK);
+
+                Cart::setCart($cart);
+
+                Cart::deActivateCart();
+
+                $this->paymentProcessor->settle($order, $checkoutSession->fresh());
             }
         } catch (\Throwable $e) {
             report($e);
@@ -274,7 +279,33 @@ class CloverController extends Controller
         }
 
         if ($cart = Cart::getCart()) {
-            return $this->cloverCheckoutSessionRepository->findLatestOpenForCart($cart->id);
+            return $this->cloverCheckoutSessionRepository->findLatestForCart($cart->id);
+        }
+
+        if ($sessionCart = session()->get('cart')) {
+            return $this->cloverCheckoutSessionRepository->findLatestForCart($sessionCart->id);
+        }
+
+        return null;
+    }
+
+    /**
+     * Wait briefly for the order of a webhook-confirmed payment to appear
+     * while the webhook request is still creating it.
+     *
+     * @param  CloverCheckoutSession  $checkoutSession
+     * @return Order|null
+     */
+    protected function awaitOrder($checkoutSession)
+    {
+        $attempts = (int) config('services.clover.order_wait_seconds', 3) * 2;
+
+        for ($i = 0; $i < $attempts; $i++) {
+            if ($order = $this->paymentProcessor->findOrderByCartId($checkoutSession->cart_id)) {
+                return $order;
+            }
+
+            usleep(500000);
         }
 
         return null;

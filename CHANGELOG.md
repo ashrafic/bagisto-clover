@@ -2,6 +2,14 @@
 
 All notable changes to this package are documented in this file.
 
+## v3.0.0
+
+- **Decoupled order settlement from cart clearing** (the webhook now settles first whenever it arrives first):
+  - The webhook creates and settles the order idempotently when no order exists yet — a payment is recorded even if the customer's browser never returns, without needing the recovery cron for that case
+  - The success return always clears the cart in the customer's own request — including the stale guest session binding when the webhook already deactivated the cart (the v1.x failure mode, now a supported path)
+  - The return resolves its checkout session through the session-bound cart even when the cart is no longer active, and briefly waits for a webhook-confirmed order to appear before creating one itself — no duplicates either way
+- Diagnostics page moved under the Bagisto admin URL prefix: `/{admin-url}/clover/diagnostics`
+
 ## v2.0.5
 
 - **Fixed cart not clearing on recovery**: when the success return reuses an order that was already created (e.g. an earlier attempt crashed after committing the order), the still-active cart is now deactivated in the customer's request again

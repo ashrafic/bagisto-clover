@@ -19,6 +19,9 @@ Route::post('clover/webhook', [CloverController::class, 'webhook'])
     ->middleware('throttle:60,1')
     ->name('clover.payment.webhook');
 
-Route::get('clover/admin/diagnostics', [DiagnosticsController::class, 'index'])
+Route::prefix(config('app.admin_url'))
     ->middleware(['web', 'admin'])
-    ->name('clover.admin.diagnostics');
+    ->group(function () {
+        Route::get('clover/diagnostics', [DiagnosticsController::class, 'index'])
+            ->name('clover.admin.diagnostics');
+    });
