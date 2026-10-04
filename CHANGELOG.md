@@ -2,6 +2,10 @@
 
 All notable changes to this package are documented in this file.
 
+## v2.0.5
+
+- **Fixed cart not clearing on recovery**: when the success return reuses an order that was already created (e.g. an earlier attempt crashed after committing the order), the still-active cart is now deactivated in the customer's request again
+
 ## v2.0.4
 
 - Diagnostics page now shows the last complete error entries (message + full stack trace) instead of only clover-matching lines

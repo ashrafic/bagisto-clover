@@ -135,8 +135,18 @@ class CloverController extends Controller
 
                     Cart::deActivateCart();
                 }
-            } elseif ($checkoutSession->status !== CloverCheckoutSessionContract::STATUS_PROCESSED) {
-                $this->paymentProcessor->markProcessed($checkoutSession, $verifiedVia);
+            } else {
+                if ($cart = $checkoutSession->cart) {
+                    if ($cart->is_active) {
+                        Cart::setCart($cart);
+
+                        Cart::deActivateCart();
+                    }
+                }
+
+                if ($checkoutSession->status !== CloverCheckoutSessionContract::STATUS_PROCESSED) {
+                    $this->paymentProcessor->markProcessed($checkoutSession, $verifiedVia);
+                }
             }
 
             $order = $this->paymentProcessor->settle($order, $checkoutSession->fresh());

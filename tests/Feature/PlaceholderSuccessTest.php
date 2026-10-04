@@ -41,6 +41,42 @@ afterEach(function () {
     }
 });
 
+it('deactivates a still-active cart when recovering an order created by an earlier failed attempt', function () {
+    // Arrange - the order was committed during the crashed attempt, cart stayed active
+    $cart = $this->createCartWithItems('clover');
+
+    app(CloverCheckoutSessionRepository::class)->create([
+        'cart_id' => $cart->id,
+        'checkout_session_id' => 'clover_cs_recovery_123',
+        'base_grand_total' => $cart->base_grand_total,
+        'currency_code' => 'USD',
+        'status' => CloverCheckoutSession::STATUS_NEW,
+    ]);
+
+    $this->get(route('clover.payment.success', ['session_id' => 'clover_cs_recovery_123']));
+
+    $cart->refresh();
+
+    expect($cart->is_active)->toBe(0);
+
+    // Act - the customer retries the success return after a failure was fixed
+    $cart->update(['is_active' => 1]);
+
+    $session = CloverCheckoutSessionModel::where('checkout_session_id', 'clover_cs_recovery_123')->first();
+
+    CloverCheckoutSessionModel::where('id', $session->id)->update(['status' => CloverCheckoutSession::STATUS_NEW]);
+
+    $response = $this->get(route('clover.payment.success', ['session_id' => 'clover_cs_recovery_123']));
+
+    // Assert - the order is reused and the cart is cleared again
+    $response->assertRedirect(route('shop.checkout.onepage.success'));
+
+    $cart->refresh();
+
+    expect($cart->is_active)->toBe(0)
+        ->and(Order::where('cart_id', $cart->id)->count())->toBe(1);
+});
+
 it('settles abandoned paid checkout sessions whose customer never returned', function () {
     // Arrange - paid session, browser never came back
     $cart = $this->createCartWithItems('clover');
